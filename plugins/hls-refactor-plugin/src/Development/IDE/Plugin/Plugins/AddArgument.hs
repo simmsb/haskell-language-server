@@ -71,19 +71,11 @@ type HsArrow pass = HsMultAnn pass
 plugin :: ParsedModule -> FileDiagnostic -> Either PluginError [(T.Text, [TextEdit])]
 plugin parsedModule fd
   | Just (rdrName, typ) <- matchVariableNotInScope fd
-  , not (isQualifiedName rdrName) = addArgumentAction parsedModule _range rdrName typ
+  , not (isQual rdrName) = addArgumentAction parsedModule _range rdrName typ
   | Just (rdrName, typ) <- matchFoundHole fd = addArgumentAction parsedModule _range rdrName (Just typ)
   | otherwise = pure []
   where
     Diagnostic{_message, _range} = fdLspDiagnostic fd
-    -- Qualified names (e.g. NE.toList) always start with an uppercase module
-    -- qualifier. Since "Variable not in scope" only reports variables and
-    -- operators, an unqualified name will never start with an uppercase letter.
-    -- Therefore, checking for an uppercase first character reliably identifies
-    -- qualified names, which can never be valid function argument patterns.
-    isQualifiedName name = case T.uncons name of
-      Just (c, _) -> isUpper c
-      Nothing     -> False
 
 -- Given a name for the new binding, add a new pattern to the match in the last position,
 -- returning how many patterns there were in this match prior to the transformation:
