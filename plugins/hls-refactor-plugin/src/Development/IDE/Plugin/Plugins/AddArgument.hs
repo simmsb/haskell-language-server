@@ -71,7 +71,7 @@ type HsArrow pass = HsMultAnn pass
 plugin :: ParsedModule -> FileDiagnostic -> Either PluginError [(T.Text, [TextEdit])]
 plugin parsedModule fd
   | Just (rdrName, typ) <- matchVariableNotInScope fd
-  , not (isQualifiedName name) = addArgumentAction parsedModule _range rdrName typ
+  , not (isQualifiedName rdrName) = addArgumentAction parsedModule _range rdrName typ
   | Just (rdrName, typ) <- matchFoundHole fd = addArgumentAction parsedModule _range rdrName (Just typ)
   | otherwise = pure []
   where
