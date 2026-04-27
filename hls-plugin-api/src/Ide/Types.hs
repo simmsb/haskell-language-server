@@ -23,6 +23,7 @@ module Ide.Types
 , IdePlugins(IdePlugins, ipMap)
 , DynFlagsModifications(..)
 , Config(..), PluginConfig(..), CheckParents(..), SessionLoadingPreferenceConfig(..)
+, OptLinkTo(..)
 , ConfigDescriptor(..), defaultConfigDescriptor, configForPlugin
 , CustomConfig(..), mkCustomConfig
 , FallbackCodeActionParams(..)
@@ -179,6 +180,8 @@ data Config =
     , cabalFormattingProvider :: !T.Text
     , maxCompletions          :: !Int
     , sessionLoading          :: !SessionLoadingPreferenceConfig
+    , linkSourceTo            :: !OptLinkTo
+    , linkDocTo               :: !OptLinkTo
     , plugins                 :: !(Map.Map PluginId PluginConfig)
     } deriving (Show,Eq)
 
@@ -190,6 +193,8 @@ instance ToJSON Config where
            , "cabalFormattingProvider"     .= cabalFormattingProvider
            , "maxCompletions"              .= maxCompletions
            , "sessionLoading"              .= sessionLoading
+           , "linkSourceTo"                .= linkSourceTo
+           , "linkDocTo"                   .= linkDocTo
            , "plugin"                      .= Map.mapKeysMonotonic (\(PluginId p) -> p) plugins
            ]
 
@@ -204,6 +209,8 @@ instance Default Config where
     -- this string value needs to kept in sync with the value provided in HlsPlugins
     , maxCompletions              = 40
     , sessionLoading              = PreferSingleComponentLoading
+    , linkSourceTo                = LinkToLocal
+    , linkDocTo                   = LinkToLocal
     , plugins                     = mempty
     }
 
@@ -214,6 +221,11 @@ data CheckParents
     | CheckOnSave
     | AlwaysCheck
   deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (FromJSON, ToJSON)
+
+
+data OptLinkTo = LinkToHackage | LinkToLocal
+  deriving stock (Eq, Ord, Show, Enum, Generic)
   deriving anyclass (FromJSON, ToJSON)
 
 
@@ -269,6 +281,7 @@ data PluginConfig =
       , plcSelectionRangeOn :: !Bool
       , plcFoldingRangeOn   :: !Bool
       , plcSemanticTokensOn :: !Bool
+      , plcDocumentLinkOn   :: !Bool
       , plcConfig           :: !Object
       } deriving (Show,Eq)
 
@@ -288,11 +301,12 @@ instance Default PluginConfig where
       , plcSelectionRangeOn = True
       , plcFoldingRangeOn   = True
       , plcSemanticTokensOn = True
+      , plcDocumentLinkOn   = True
       , plcConfig           = mempty
       }
 
 instance ToJSON PluginConfig where
-    toJSON (PluginConfig g ch ca ih cl d h s sh c rn sr fr st cfg) = r
+    toJSON (PluginConfig g ch ca ih cl d h s sh c rn sr fr st dl cfg) = r
       where
         r = object [ "globalOn"         .= g
                    , "callHierarchyOn"  .= ch
@@ -308,6 +322,7 @@ instance ToJSON PluginConfig where
                    , "selectionRangeOn" .= sr
                    , "foldingRangeOn"   .= fr
                    , "semanticTokensOn" .= st
+                   , "documentLinkOn"   .= dl
                    , "config"           .= cfg
                    ]
 
@@ -613,6 +628,8 @@ instance PluginMethod Request Method_WorkspaceExecuteCommand where
 instance PluginMethod Request (Method_CustomMethod m) where
   handlesRequest _ _ _ _ _ = HandlesRequest
 
+instance PluginMethod Request Method_TextDocumentDocumentLink where
+
 -- Plugin Notifications
 
 instance PluginMethod Notification Method_TextDocumentDidOpen where
@@ -843,6 +860,9 @@ instance PluginRequestMethod Method_TextDocumentSemanticTokensFullDelta where
 
 instance PluginRequestMethod Method_TextDocumentInlayHint where
   combineResponses _ _ _ _ x = sconcat x
+
+instance PluginRequestMethod Method_TextDocumentDocumentLink where
+
 
 takeLefts :: [a |? b] -> [a]
 takeLefts = mapMaybe (\x -> [res | (InL res) <- Just x])

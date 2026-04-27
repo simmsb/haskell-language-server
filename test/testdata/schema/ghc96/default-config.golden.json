@@ -3,6 +3,8 @@
     "checkParents": "CheckOnSave",
     "checkProject": true,
     "formattingProvider": "ormolu",
+    "linkDocTo": "LinkToLocal",
+    "linkSourceTo": "LinkToLocal",
     "maxCompletions": 40,
     "plugin": {
         "alternateNumberFormat": {
@@ -37,6 +39,9 @@
         "class": {
             "codeActionsOn": true,
             "codeLensOn": true
+        },
+        "documentLink": {
+            "globalOn": true
         },
         "eval": {
             "codeActionsOn": true,

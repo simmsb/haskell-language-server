@@ -43,6 +43,9 @@ parseConfig idePlugins defValue = A.withObject "settings" $ \o ->
     <*> o .:? "cabalFormattingProvider"                 .!= cabalFormattingProvider defValue
     <*> o .:? "maxCompletions"                          .!= maxCompletions defValue
     <*> o .:? "sessionLoading"                          .!= sessionLoading defValue
+    <*> o .:? "linkSourceTo"                            .!= linkSourceTo defValue
+    <*> o .:? "linkDocTo"                               .!=
+        linkDocTo defValue
     <*> A.explicitParseFieldMaybe (parsePlugins idePlugins) o "plugin" .!= plugins defValue
 
 -- | Parse the 'PluginConfig'.
@@ -78,6 +81,7 @@ parsePluginConfig def = A.withObject "PluginConfig" $ \o -> PluginConfig
       <*> o .:? "selectionRangeOn" .!= plcSelectionRangeOn def
       <*> o .:? "foldingRangeOn"   .!= plcFoldingRangeOn def
       <*> o .:? "semanticTokensOn" .!= plcSemanticTokensOn def
+      <*> o .:? "documentLinkOn"   .!= plcDocumentLinkOn def
       <*> o .:? "config"           .!= plcConfig        def
 
 -- ---------------------------------------------------------------------
